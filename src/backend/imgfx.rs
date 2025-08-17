@@ -1,6 +1,6 @@
 use clap::builder::styling::RgbColor;
 use dioxus::prelude::*;
-use image::{DynamicImage, ImageBuffer, RgbaImage};
+use image::{DynamicImage, RgbaImage};
 use imgfx;
 
 pub fn or(image: DynamicImage, color: RgbColor) -> Result<RgbaImage, ServerFnError> {

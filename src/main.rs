@@ -1,6 +1,6 @@
 use backend::{and, or, xor};
 use clap::builder::styling::RgbColor;
-use components::{ColorPicker, NavBar};
+use components::{ColorPicker, EffectItem, NavBar};
 use dioxus::prelude::*;
 use image::{DynamicImage, RgbaImage};
 use routes::Home;
@@ -177,18 +177,28 @@ fn App() -> Element {
                 }
             }
 
-            div {
-                select {
-                    value: "{selected_effect}",
-                    onchange: move |evt: FormEvent| selected_effect.set(evt.data.value()),
-                    option { value: "or", "Bitwise OR" }
-                    option { value: "and", "Bitwise AND" }
-                    option { value: "xor", "Bitwise XOR" }
-                }
+            ul {
+                EffectItem { title: "Item 1" }
+                EffectItem { title: "Item 2" }
+                EffectItem { title: "Item 3" }
             }
 
             div {
-                ColorPicker { color: color }
+                style: "display: flex; flex-direction: row; justify-content: space-between; width: 100%; padding: 4px;",
+
+                div {
+                    select {
+                        value: "{selected_effect}",
+                        onchange: move |evt: FormEvent| selected_effect.set(evt.data.value()),
+                        option { value: "or", "Bitwise OR" }
+                        option { value: "and", "Bitwise AND" }
+                        option { value: "xor", "Bitwise XOR" }
+                    }
+                }
+
+                div {
+                    ColorPicker { color: color }
+                }
             }
 
             // Action buttons
