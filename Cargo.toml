@@ -1,0 +1,37 @@
+[package]
+name = "imgfxdx"
+version = "0.1.0"
+authors = ["Gabriel Hooks <gabriel.i.hooks@gmail.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dioxus = { version = "0.6.0", features = ["fullstack", "router"] }
+reqwest = { version = "0.12.23", features = ["json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+rusqlite = { version = "0.32.1", optional = true }
+imgfx = "0.2.3"
+base64 = "0.22.1"
+image = "0.25.6"
+clap = "4.5.45"
+
+
+[features]
+default = []
+web = ["dioxus/web"]
+desktop = ["dioxus/desktop"]
+mobile = ["dioxus/mobile"]
+server = ["dioxus/server", "dep:rusqlite"]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
