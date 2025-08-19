@@ -1,8 +1,9 @@
-use backend::{and, or, xor};
+use backend::{Effect, *};
 use clap::builder::styling::RgbColor;
 use components::{ColorPicker, EffectItem, NavBar};
 use dioxus::prelude::*;
-use image::{DynamicImage, RgbaImage};
+use image::{DynamicImage, Rgb, RgbaImage};
+use imgfx::{Direction, SortBy};
 use routes::Home;
 use utils::{create_preview_data_url, is_image_file, rgba_image_to_data_url};
 
@@ -25,6 +26,206 @@ fn main() {
     dioxus::launch(App);
 }
 
+#[derive(Props, Clone, PartialEq)]
+pub struct EffectFormProps {
+    effect_list: Signal<Vec<crate::backend::Effect>>,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum EffectType {
+    Or,
+    And,
+    Xor,
+    Left,
+    Right,
+    Add,
+    Sub,
+    Mult,
+    Pow,
+    Div,
+    Average,
+    Screen,
+    Overlay,
+    Bloom,
+    Sort,
+}
+
+impl EffectType {
+    fn name(&self) -> &'static str {
+        match self {
+            EffectType::Or => "OR",
+            EffectType::And => "AND",
+            EffectType::Xor => "XOR",
+            EffectType::Left => "Left",
+            EffectType::Right => "Right",
+            EffectType::Add => "Add",
+            EffectType::Sub => "Subtract",
+            EffectType::Mult => "Multiply",
+            EffectType::Pow => "Power",
+            EffectType::Div => "Divide",
+            EffectType::Average => "Average",
+            EffectType::Screen => "Screen",
+            EffectType::Overlay => "Overlay",
+            EffectType::Bloom => "Bloom",
+            EffectType::Sort => "Sort",
+        }
+    }
+
+    fn accepts_color(&self) -> bool {
+        matches!(
+            self,
+            EffectType::Or
+                | EffectType::And
+                | EffectType::Xor
+                | EffectType::Add
+                | EffectType::Sub
+                | EffectType::Mult
+                | EffectType::Pow
+                | EffectType::Div
+                | EffectType::Average
+                | EffectType::Screen
+                | EffectType::Overlay
+        )
+    }
+
+    fn to_effect(&self, color: Rgb<u8>) -> Effect {
+        match self {
+            EffectType::Or => Effect::Or {
+                color,
+                negate: false,
+            },
+            EffectType::And => Effect::And {
+                color,
+                negate: false,
+            },
+            EffectType::Xor => Effect::Xor {
+                color,
+                negate: false,
+            },
+            EffectType::Add => Effect::Add { color },
+            EffectType::Sub => Effect::Sub {
+                color,
+                negate: false,
+            },
+            EffectType::Mult => Effect::Mult { color },
+            EffectType::Pow => Effect::Pow { color },
+            EffectType::Div => Effect::Div { color },
+            EffectType::Average => Effect::Average { color },
+            EffectType::Screen => Effect::Screen { color },
+            EffectType::Overlay => Effect::Overlay { color },
+            // Non-color effects with default values
+            EffectType::Left => Effect::Left {
+                bits: 1,
+                negate: false,
+            },
+            EffectType::Right => Effect::Right {
+                bits: 1,
+                negate: false,
+            },
+            EffectType::Bloom => Effect::Bloom {
+                intensity: 1.0,
+                radius: 5.0,
+                min_threshold: 128,
+                max_threshold: Some(255),
+            },
+            EffectType::Sort => Effect::Sort {
+                direction: Direction::Horizontal, // You'll need to define this
+                sort_by: SortBy::Luminance,       // You'll need to define this
+                min_threshold: 0.0,
+                max_threshold: 1.0,
+                reversed: false,
+            },
+        }
+    }
+}
+
+/// Form to add new effects to the list
+#[component]
+fn EffectForm(mut props: EffectFormProps) -> Element {
+    let mut selected_effect_type = use_signal(|| None::<EffectType>);
+    let selected_color = use_signal(|| Rgb([255u8, 0u8, 0u8]));
+
+    let effect_types = vec![
+        EffectType::Or,
+        EffectType::And,
+        EffectType::Xor,
+        EffectType::Left,
+        EffectType::Right,
+        EffectType::Add,
+        EffectType::Sub,
+        EffectType::Mult,
+        EffectType::Pow,
+        EffectType::Div,
+        EffectType::Average,
+        EffectType::Screen,
+        EffectType::Overlay,
+        EffectType::Bloom,
+        EffectType::Sort,
+    ];
+
+    let add_effect = move |_| {
+        if let Some(effect_type) = *selected_effect_type.read() {
+            let new_effect = effect_type.to_effect(*selected_color.read());
+            let mut current_list = props.effect_list.read().clone();
+            current_list.push(new_effect);
+            props.effect_list.set(current_list);
+
+            // Reset form
+            // *selected_effect_type.set(None);
+        }
+    };
+
+    rsx! {
+        form {
+            prevent_default: "onsubmit",
+            onsubmit: add_effect,
+
+            div {
+                label { "Effect Type:" }
+                select {
+                    value: if let Some(effect_type) = selected_effect_type.read().as_ref() {
+                        format!("{}", effect_types.iter().position(|e| e == effect_type).unwrap_or(0))
+                    } else {
+                        String::new()
+                    },
+                    onchange: move |evt| {
+                        if let Ok(index) = evt.value().parse::<usize>() {
+                            if let Some(effect_type) = effect_types.get(index) {
+                                selected_effect_type.set(Some(*effect_type));
+                            }
+                        }
+                    },
+                    option { value: "", "Select an effect..." }
+                    for (i, effect_type) in effect_types.iter().enumerate() {
+                        option {
+                            value: "{i}",
+                            "{effect_type.name()}"
+                        }
+                    }
+                }
+            }
+
+            // Show color picker only if selected effect accepts color
+            if let Some(effect_type) = selected_effect_type.read().as_ref() {
+                if effect_type.accepts_color() {
+                    div {
+                        label { "Color:" }
+                        ColorPicker { color: selected_color }
+                    }
+                }
+            }
+
+            div {
+                button {
+                    r#type: "submit",
+                    disabled: selected_effect_type.read().is_none(),
+                    "Add Effect"
+                }
+            }
+        }
+    }
+}
+
 #[component]
 fn App() -> Element {
     let mut uploaded_image = use_signal(|| None::<DynamicImage>);
@@ -32,8 +233,8 @@ fn App() -> Element {
     let mut processed_image_url = use_signal(|| None::<String>);
     let mut upload_status = use_signal(|| String::new());
     let mut is_processing = use_signal(|| false);
-    let mut selected_effect = use_signal(|| "or".to_string());
-    let color = use_signal(|| RgbColor(0, 0, 0));
+    let color = use_signal(|| Rgb([0, 0, 0]));
+    let effect_list = use_signal(|| vec![]);
 
     // Handle file upload
     let handle_file_upload = move |evt: Event<FormData>| {
@@ -89,45 +290,105 @@ fn App() -> Element {
     };
 
     // Handle processing with OR function
-    let apply_or_function = move |_| {
-        let func: Option<Box<dyn Fn(DynamicImage, RgbColor) -> Result<RgbaImage, ServerFnError>>> =
-            match selected_effect.read().as_str() {
-                "or" => Some(Box::new(or)),
-                "and" => Some(Box::new(and)),
-                "xor" => Some(Box::new(xor)),
-                _ => None,
-            };
-
+    let apply_effects = move |_| {
         if let Some(image) = uploaded_image.read().clone() {
+            let effects: Vec<Effect> = effect_list.read().clone(); // Clone here instead of just borrowing
+            if effects.is_empty() {
+                upload_status.set("No effects in the list to apply".to_string());
+                return;
+            }
             is_processing.set(true);
-            upload_status.set("Processing image with OR function...".to_string());
-
+            upload_status.set("Processing image with effect chain...".to_string());
             spawn(async move {
-                // Apply your OR function
-                let rgba_image = if let Some(f) = func {
-                    f(image, *color.read())
-                } else {
-                    // Handle the case where no function is selected
-                    // You could return the original image converted to RgbaImage or show an error
-                    upload_status.set("No effect selected".to_string());
-                    is_processing.set(false);
-                    return; // or continue, depending on your control flow
-                };
-
-                // Convert to data URL for display
-                match rgba_image_to_data_url(&rgba_image.unwrap()) {
+                let mut current_image = image;
+                // Apply each effect in sequence
+                for (index, effect) in effects.iter().enumerate() {
+                    upload_status.set(format!(
+                        "Applying effect {} of {}: {}",
+                        index + 1,
+                        effects.len(),
+                        effect.name()
+                    ));
+                    match apply_single_effect(current_image.clone(), effect) {
+                        Ok(processed) => {
+                            // Convert RgbaImage back to DynamicImage for the next effect
+                            current_image = DynamicImage::ImageRgba8(processed);
+                        }
+                        Err(e) => {
+                            upload_status.set(format!(
+                                "Error applying effect {}: {}",
+                                index + 1,
+                                e
+                            ));
+                            is_processing.set(false);
+                            return;
+                        }
+                    }
+                }
+                // Convert final result to data URL for display
+                let final_rgba = current_image.to_rgba8();
+                match rgba_image_to_data_url(&final_rgba) {
                     Ok(data_url) => {
                         processed_image_url.set(Some(data_url));
-                        upload_status.set("Image processed successfully!".to_string());
+                        upload_status
+                            .set(format!("Successfully applied {} effects!", effects.len()));
                     }
                     Err(e) => {
-                        upload_status.set(format!("Error processing image: {}", e));
+                        upload_status.set(format!("Error creating final image: {}", e));
                     }
                 }
                 is_processing.set(false);
             });
         }
     };
+
+    // Helper function to apply a single effect
+    fn apply_single_effect(
+        image: DynamicImage,
+        effect: &crate::backend::Effect,
+    ) -> Result<RgbaImage, ServerFnError> {
+        match effect {
+            crate::backend::Effect::Or { color, negate } => or(image, *color),
+            crate::backend::Effect::And { color, negate } => and(image, *color),
+            crate::backend::Effect::Xor { color, negate } => xor(image, *color),
+            crate::backend::Effect::Left { bits, negate } => left(image, bits.clone()),
+            crate::backend::Effect::Right { bits, negate } => right(image, bits.clone()),
+            _ => or(image, Rgb([0, 0, 0])), // crate::backend::Effect::Add { color } => add(image, *color),
+                                            // crate::backend::Effect::Sub { color, negate } => sub(image, *color),
+                                            // crate::backend::Effect::Mult { color } => mult(image, *color),
+                                            // crate::backend::Effect::Pow { color } => pow(image, *color),
+                                            // crate::backend::Effect::Div { color } => div(image, *color),
+                                            // crate::backend::Effect::Average { color } => average(image, *color),
+                                            // crate::backend::Effect::Screen { color } => screen(image, *color),
+                                            // crate::backend::Effect::Overlay { color } => overlay(image, *color),
+                                            // crate::backend::Effect::Bloom {
+                                            //     intensity,
+                                            //     radius,
+                                            //     min_threshold,
+                                            //     max_threshold,
+                                            // } => {
+                                            //     // You'll need to create or update your bloom function to accept these parameters
+                                            //     bloom_with_params(image, *intensity, *radius, *min_threshold, *max_threshold)
+                                            // }
+                                            // crate::backend::Effect::Sort {
+                                            //     direction,
+                                            //     sort_by,
+                                            //     min_threshold,
+                                            //     max_threshold,
+                                            //     reversed,
+                                            // } => {
+                                            //     // You'll need to create or update your sort function to accept these parameters
+                                            //     sort_with_params(
+                                            //         image,
+                                            //         *direction,
+                                            //         *sort_by,
+                                            //         *min_threshold,
+                                            //         *max_threshold,
+                                            //         *reversed,
+                                            //     )
+                                            // }
+        }
+    }
 
     // Clear all images
     let clear_images = move |_| {
@@ -149,7 +410,7 @@ fn App() -> Element {
 
             h1 {
                 style: "text-align: center; color: #333;",
-                "Image Processing with OR Function"
+                "imgfx DIOXUS"
             }
 
             // Upload section
@@ -177,29 +438,20 @@ fn App() -> Element {
                 }
             }
 
+            EffectForm { effect_list: effect_list }
+
             ul {
-                EffectItem { title: "Item 1" }
-                EffectItem { title: "Item 2" }
-                EffectItem { title: "Item 3" }
-            }
-
-            div {
-                style: "display: flex; flex-direction: row; justify-content: space-between; width: 100%; padding: 4px;",
-
-                div {
-                    select {
-                        value: "{selected_effect}",
-                        onchange: move |evt: FormEvent| selected_effect.set(evt.data.value()),
-                        option { value: "or", "Bitwise OR" }
-                        option { value: "and", "Bitwise AND" }
-                        option { value: "xor", "Bitwise XOR" }
+                for (index, effect) in effect_list.read().iter().enumerate() {
+                    EffectItem {
+                        title: effect.clone().name(),
+                        key: "{index}",
+                        index,
+                        effect: effect.clone(),
+                        effect_list,
                     }
                 }
-
-                div {
-                    ColorPicker { color: color }
-                }
             }
+
 
             // Action buttons
             if uploaded_image.read().is_some() {
@@ -207,7 +459,7 @@ fn App() -> Element {
                     style: "text-align: center; margin-bottom: 30px;",
 
                     button {
-                        onclick: apply_or_function,
+                        onclick: apply_effects,
                         disabled: *is_processing.read(),
                         style: "margin-right: 10px; padding: 12px 24px; background-color: #000000; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;",
                         if *is_processing.read() { "Processing..." } else { "Apply OR Function" }

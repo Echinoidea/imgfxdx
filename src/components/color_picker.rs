@@ -1,14 +1,17 @@
-use clap::builder::styling::RgbColor;
 use dioxus::prelude::*;
+use image::Rgb;
 
 #[derive(PartialEq, Props, Clone)]
 pub struct ColorPickerProps {
-    color: Signal<RgbColor>,
+    color: Signal<Rgb<u8>>,
 }
 
 #[component]
 pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
     let current_color = *props.color.read();
+    let r = current_color.0[0].clone();
+    let g = current_color.0[1].clone();
+    let b = current_color.0[2].clone();
 
     rsx! {
         div {
@@ -17,7 +20,7 @@ pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
 
             // Color preview
             div {
-                style: "width: 100%; height: 50px; border: 2px solid #333; border-radius: 4px; background-color: rgb({current_color.0}, {current_color.1}, {current_color.2});",
+                style: "width: 100%; height: 50px; border: 2px solid #333; border-radius: 4px; background-color: rgb({r}, {g}, {b});",
             }
 
             // RGB sliders
@@ -35,17 +38,17 @@ pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
                         r#type: "range",
                         min: "0",
                         max: "255",
-                        value: "{current_color.0}",
+                        value: "{r}",
                         style: "flex: 1;",
                         oninput: move |evt| {
                             if let Ok(r) = evt.value().parse::<u8>() {
-                                props.color.set(RgbColor(r, current_color.1, current_color.2));
+                                props.color.set(image::Rgb([r, current_color.0[1], current_color.0[2]]));
                             }
                         }
                     }
                     span {
                         style: "min-width: 35px; text-align: right; font-mono;",
-                        "{current_color.0}"
+                        "{r}"
                     }
                 }
 
@@ -60,17 +63,17 @@ pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
                         r#type: "range",
                         min: "0",
                         max: "255",
-                        value: "{current_color.1}",
+                        value: "{g}",
                         style: "flex: 1;",
                         oninput: move |evt| {
                             if let Ok(g) = evt.value().parse::<u8>() {
-                                props.color.set(RgbColor(current_color.0, g, current_color.2));
+                                props.color.set(image::Rgb([current_color.0[0], g, current_color.0[2]]));
                             }
                         }
                     }
                     span {
                         style: "min-width: 35px; text-align: right; font-mono;",
-                        "{current_color.1}"
+                        "{g}"
                     }
                 }
 
@@ -85,17 +88,17 @@ pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
                         r#type: "range",
                         min: "0",
                         max: "255",
-                        value: "{current_color.2}",
+                        value: "{b}",
                         style: "flex: 1;",
                         oninput: move |evt| {
                             if let Ok(b) = evt.value().parse::<u8>() {
-                                props.color.set(RgbColor(current_color.0, current_color.1, b));
+                                props.color.set(image::Rgb([current_color.0[0], current_color.0[1], b]));
                             }
                         }
                     }
                     span {
                         style: "min-width: 35px; text-align: right; font-mono;",
-                        "{current_color.2}"
+                        "{b}"
                     }
                 }
             }
@@ -103,7 +106,7 @@ pub fn ColorPicker(mut props: ColorPickerProps) -> Element {
             // RGB values display
             div {
                 style: "text-align: center; font-mono; color: #666; font-size: 12px;",
-                "rgb({current_color.0}, {current_color.1}, {current_color.2})"
+                "rgb({r}, {g}, {b})"
             }
         }
     }
