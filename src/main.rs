@@ -586,6 +586,7 @@ fn App() -> Element {
     let mut is_processing = use_signal(|| false);
     let color = use_signal(|| Rgb([0, 0, 0]));
     let effect_list = use_signal(|| vec![]);
+    let mut side_by_side_layout = use_signal(|| false); // New state for layout toggle
 
     // Handle file upload
     let handle_file_upload = move |evt: Event<FormData>| {
@@ -640,7 +641,7 @@ fn App() -> Element {
         }
     };
 
-    // Handle processing with OR function
+    // Handle processing with effect chain
     let apply_effects = move |_| {
         if let Some(image) = uploaded_image.read().clone() {
             let effects: Vec<Effect> = effect_list.read().clone(); // Clone here instead of just borrowing
@@ -717,10 +718,7 @@ fn App() -> Element {
                 radius,
                 min_threshold,
                 max_threshold,
-            } => {
-                // You'll need to create or update your bloom function to accept these parameters
-                bloom(image, *intensity, *radius, *min_threshold, *max_threshold)
-            }
+            } => bloom(image, *intensity, *radius, *min_threshold, *max_threshold),
             crate::backend::Effect::Sort {
                 direction,
                 sort_by,
@@ -747,130 +745,133 @@ fn App() -> Element {
         is_processing.set(false);
     };
 
+    // Toggle layout function
+    let toggle_layout = move |_| {
+        let current_value = *side_by_side_layout.read();
+        side_by_side_layout.set(!current_value);
+    };
+
     rsx! {
-            // In addition to element and text (which we will see later), rsx can contain other components. In this case,
-            // we are using the `document::Link` component to add a link to our favicon and main CSS file into the head of our app.
-            document::Link { rel: "icon", href: FAVICON }
-            document::Link { rel: "stylesheet", href: MAIN_CSS }
+        document::Link { rel: "icon", href: FAVICON }
+        document::Link { rel: "stylesheet", href: MAIN_CSS }
 
-            main {
-                id: "main",
+        main {
+            id: "main",
 
-                // Upload section
+            // Upload section
+            div {
+                id: "menu",
+
+                label {
+                    style: "display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px;",
+                    "Select an image file:"
+                }
+
+                input {
+                    r#type: "file",
+                    accept: "image/*",
+                    onchange: handle_file_upload,
+                    style: "width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;",
+                }
+
+                if !upload_status.read().is_empty() {
+                    div {
+                        style: "padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #000000; border: 1px solid #bee5eb;",
+                        "{upload_status.read()}"
+                    }
+                }
+
                 div {
-                    id: "menu",
+                    style: "display: flex; flex-direction: column; gap: 20px; justify-content:center; align-items: center;",
+                    EffectForm { effect_list: effect_list }
+                }
 
-                    label {
-                        style: "display: block; margin-bottom: 10px; font-weight: bold; font-size: 16px;",
-                        "Select an image file:"
-                    }
-
-                    input {
-                        r#type: "file",
-                        accept: "image/*",
-                        onchange: handle_file_upload,
-                        style: "width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;",
-                    }
-
-
-
-                    if !upload_status.read().is_empty() {
-                        div {
-                            style: "padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #000000; border: 1px solid #bee5eb;",
-                            "{upload_status.read()}"
-                        }
-
-
-                        // Action buttons
-                    }
-
-                    div {
-                        style: "display: flex; flex-direction: column; gap: 20px; justify-content:center; align-items: center;",
-                        EffectForm { effect_list: effect_list }
-                    }
-
-
-
-                    div {
-                        style: "display: flex; width: 100%;",
-                        ul {
-                            style: "width: 100%; padding-left: 0px; margin-left: 0px;",
-                            for (index, effect) in effect_list.read().iter().enumerate() {
-                                EffectItem {
-                                    title: effect.clone().name(),
-                                    key: "{index}",
-                                    index,
-                                    effect: effect.clone(),
-                                    effect_list,
-                                }
-                            }
-                        }
-                    }
-
-
-
-                    // Buttons
-                    if uploaded_image.read().is_some() {
-                        div {
-                            style: "text-align: center; margin-top: auto; margin-bottom: 0px;",
-
-                            button {
-                                onclick: apply_effects,
-                                disabled: *is_processing.read(),
-                                style: "margin-right: 10px; padding: 12px 24px; background-color: #000000; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;",
-                                if *is_processing.read() { "Processing..." } else { "Apply OR Function" }
-                            }
-
-                            button {
-                                onclick: clear_images,
-                                style: "padding: 12px 24px; background-color: #000000; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;",
-                                "Clear All"
+                div {
+                    style: "display: flex; width: 100%;",
+                    ul {
+                        style: "width: 100%; padding-left: 0px; margin-left: 0px;",
+                        for (index, effect) in effect_list.read().iter().enumerate() {
+                            EffectItem {
+                                title: effect.clone().name(),
+                                key: "{index}",
+                                index,
+                                effect: effect.clone(),
+                                effect_list,
                             }
                         }
                     }
                 }
 
+                // Buttons
+                if uploaded_image.read().is_some() {
+                    div {
+                        style: "text-align: center; margin-top: auto; margin-bottom: 0px; display: flex; justify-content: space-between; gap: 8px;",
 
+                        button {
+                            class: "control-button",
+                            onclick: apply_effects,
+                            disabled: *is_processing.read(),
+                            if *is_processing.read() { "Processing..." } else { "Apply Effects" }
+                        }
 
+                        button {
+                            class: "control-button",
+                            onclick: clear_images,
+                            "Clear All"
+                        }
+                    }
+                }
 
-
-
-                // Images display section
-    div {
-        class: "images-container",
-
-        // Original image
-        if let Some(original_url) = original_image_url.read().as_ref() {
-            div {
-                class: "image-wrapper",
-                img {
-                    src: "{original_url}",
-                    alt: "Original image",
+                if original_image_url.read().is_some() || processed_image_url.read().is_some() {
+                    button {
+                        class: "layout-toggle",
+                        onclick: toggle_layout,
+                        if *side_by_side_layout.read() {
+                            "Switch to Stacked"
+                        } else {
+                            "Switch to Side-by-Side"
+                        }
+                    }
                 }
             }
-        }
 
-        // Processed image
-        if let Some(processed_url) = processed_image_url.read().as_ref() {
+
+            // Images display section
             div {
-                class: "image-wrapper",
-                img {
-                    src: "{processed_url}",
-                    alt: "Processed image",
+                class: if *side_by_side_layout.read() { "images-container side-by-side" } else { "images-container" },
+
+                // Layout toggle button - only show when images are present
+
+                // Original image
+                if let Some(original_url) = original_image_url.read().as_ref() {
+                    div {
+                        class: "image-wrapper",
+                        img {
+                            src: "{original_url}",
+                            alt: "Original image",
+                        }
+                    }
                 }
-            }
-        }
 
-        // Instructions when no image is uploaded
-        if uploaded_image.read().is_none() {
-            div {
-                class: "no-image-message",
-                "Upload an image to get started!"
+                // Processed image
+                if let Some(processed_url) = processed_image_url.read().as_ref() {
+                    div {
+                        class: "image-wrapper",
+                        img {
+                            src: "{processed_url}",
+                            alt: "Processed image",
+                        }
+                    }
+                }
+
+                // Instructions when no image is uploaded
+                if uploaded_image.read().is_none() {
+                    div {
+                        class: "no-image-message",
+                        "Upload an image to get started!"
+                    }
+                }
             }
         }
     }
-            }
-
-            // Router::<Route>{}
-        }
 }

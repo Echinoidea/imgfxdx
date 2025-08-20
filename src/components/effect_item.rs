@@ -35,14 +35,36 @@ pub fn EffectItem(mut props: EffectItemProps) -> Element {
         props.effect_list.set(current_list);
     };
 
+    let move_up = move |_| {
+        let mut current_list = props.effect_list.read().clone();
+        if props.index > 0 {
+            current_list.swap(props.index, props.index - 1);
+            props.effect_list.set(current_list);
+        }
+    };
+
+    let move_down = move |_| {
+        let mut current_list = props.effect_list.read().clone();
+        if props.index < current_list.len() - 1 {
+            current_list.swap(props.index, props.index + 1);
+            props.effect_list.set(current_list);
+        }
+    };
+
     rsx! {
         ul {
+            class: "effect-item",
             div {
-                style: "display: flex; flex-direction: row; justify-content: space-between; width: 100%;",
+                style: "display: flex; flex-direction: row; justify-content: space-between; width: 100%; transition: transform 0.2s;",
 
-                p {"{props.title}"}
+                p {style: "font-size: 20px; text-align: center;", "{props.title}"}
 
-                button {onclick: remove_effect, "-" }
+                div {
+                    id: "effect-controls-move",
+                    button { class: "effect-control-button", onclick: move_up, "↑" }
+                    button { class: "effect-control-button", onclick: move_down, "↓" }
+                }
+                button {class: "effect-control-button", onclick: remove_effect, "-" }
             }
         }
     }

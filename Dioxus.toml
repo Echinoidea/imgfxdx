@@ -6,6 +6,7 @@ publisher = "Gabriel Hooks"
 icon = ["assets/icon.png"]
 
 [web.app]
+base_path = "imgfxdx-ghpages"
 
 # HTML title tag content
 title = "imgfxdx"

@@ -42,7 +42,25 @@ body {
     overflow-y: auto; /* Allow scrolling in menu if needed */
 }
 
-/* Images container */
+/* Layout toggle button */
+.layout-toggle {
+    padding: 8px 16px;
+    background-color: var(--bg);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.layout-toggle:hover {
+    background-color: var(--border);
+    color: var(--fg);
+}
+
+/* Images container - stacked layout (default) */
 .images-container {
     flex: 1; /* Take remaining space */
     height: 100%;
@@ -53,7 +71,12 @@ body {
     overflow: hidden; /* Prevent overflow */
 }
 
-/* Individual image containers */
+/* Images container - side by side layout */
+.images-container.side-by-side {
+    flex-direction: row;
+}
+
+/* Individual image containers - stacked layout */
 .image-wrapper {
     flex: 1; /* Each image takes equal space */
     display: flex;
@@ -64,6 +87,11 @@ body {
     border-radius: 8px;
     background: var(--bg2);
     overflow: hidden;
+}
+
+/* Individual image containers - side by side layout */
+.images-container.side-by-side .image-wrapper {
+    min-width: 0; /* Important for flex children in row layout */
 }
 
 img {
@@ -142,6 +170,11 @@ img {
         flex: 1;
         min-height: 0;
     }
+
+    /* Force stacked layout on smaller screens */
+    .images-container.side-by-side {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 768px) {
@@ -161,4 +194,58 @@ img {
     .images-container {
         padding: 10px;
     }
+}
+
+#effect-controls-move {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    font-size: 3rem;
+}
+
+.effect-control-button {
+    padding: 8px 16px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 20px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+}
+
+.effect-control-button:hover {
+    background-color: var(--secondary);
+    color: var(--bg);
+}
+
+ul li,
+.effect-item {
+    transition: all 0.2s ease-in-out;
+    transform: translateY(0);
+}
+
+.effect-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.control-button {
+    padding: 8px 16px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+    width: 100%;
+    height: 75%;
+}
+
+.control-button:hover {
+    background-color: var(--secondary);
+    color: var(--bg);
 }
