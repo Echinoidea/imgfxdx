@@ -39,12 +39,10 @@ pub fn EffectItem(mut props: EffectItemProps) -> Element {
         ul {
             div {
                 style: "display: flex; flex-direction: row; justify-content: space-between; width: 100%;",
-                "{props.title}",
 
-                div {
-                    style: "display: flex; flex-direction: row; justify-content: flex-end; width: 50%;",
-                    button {onclick: remove_effect, "-" }
-                }
+                p {"{props.title}"}
+
+                button {onclick: remove_effect, "-" }
             }
         }
     }

@@ -1,8 +1,93 @@
+:root {
+    --bg: #0a090cff;
+    --fg: #f0edeeff;
+    --bg2: #161619;
+    --border: #1c1c1e;
+    --primary: #2c666eff;
+    --secondary: #90ddf0ff;
+    --contrast: #cf9893ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    background-color: #0f1116;
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px;
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    height: 100vh;
+    overflow: hidden; /* Prevent page scrolling */
+}
+
+#main {
+    width: 100%;
+    height: calc(100vh - 40px); /* Account for body padding */
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+#menu {
+    flex: 0 0 25%; /* Don't grow or shrink, fixed at 25% */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg2);
+    border: 3px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    overflow-y: auto; /* Allow scrolling in menu if needed */
+}
+
+/* Images container */
+.images-container {
+    flex: 1; /* Take remaining space */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    overflow: hidden; /* Prevent overflow */
+}
+
+/* Individual image containers */
+.image-wrapper {
+    flex: 1; /* Each image takes equal space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0; /* Important for flex children */
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg2);
+    overflow: hidden;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain; /* Changed from cover to contain */
+    display: block;
+}
+
+/* When no image is uploaded */
+.no-image-message {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    background: var(--bg2);
 }
 
 #hero {
@@ -39,4 +124,41 @@ body {
 
 #header {
     max-width: 1200px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    #main {
+        flex-direction: column;
+        height: calc(100vh - 40px);
+    }
+
+    #menu {
+        flex: 0 0 auto;
+        max-height: 40vh;
+    }
+
+    .images-container {
+        flex: 1;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    #main {
+        height: calc(100vh - 20px);
+        gap: 10px;
+    }
+
+    #menu {
+        padding: 1rem;
+    }
+
+    .images-container {
+        padding: 10px;
+    }
 }

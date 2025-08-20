@@ -49,16 +49,16 @@ pub enum Effect {
         color: Rgb<u8>,
     },
     Bloom {
-        intensity: f32,
-        radius: f32,
+        intensity: f64,
+        radius: f64,
         min_threshold: u8,
         max_threshold: Option<u8>,
     },
     Sort {
         direction: Direction,
         sort_by: SortBy,
-        min_threshold: f32,
-        max_threshold: f32,
+        min_threshold: f64,
+        max_threshold: f64,
         reversed: bool,
     },
 }
