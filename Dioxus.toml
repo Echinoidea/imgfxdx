@@ -3,10 +3,10 @@
 [bundle]
 identifier = "com.gabrielhooks"
 publisher = "Gabriel Hooks"
-icon = ["assets/icon.png"]
+icon = ["assets/icon1.png"]
 
 [web.app]
-base_path = "imgfxdx-ghpages"
+# base_path = "imgfxdx-ghpages"
 
 # HTML title tag content
 title = "imgfxdx"

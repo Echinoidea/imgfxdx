@@ -57,6 +57,7 @@ body {
 
 .layout-toggle:hover {
     background-color: var(--border);
+
     color: var(--fg);
 }
 

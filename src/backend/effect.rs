@@ -1,52 +1,76 @@
 use image::Rgb;
 use imgfx::{Direction, SortBy};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum Effect {
     Or {
         color: Rgb<u8>,
         negate: bool,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     And {
         color: Rgb<u8>,
         negate: bool,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Xor {
         color: Rgb<u8>,
         negate: bool,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Left {
         bits: u8,
         negate: bool,
+        lhs: Option<Vec<String>>,
     },
     Right {
         bits: u8,
         negate: bool,
+        lhs: Option<Vec<String>>,
     },
     Add {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Sub {
         color: Rgb<u8>,
         negate: bool,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Mult {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Pow {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Div {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Average {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Screen {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Overlay {
         color: Rgb<u8>,
+        lhs: Option<Vec<String>>,
+        rhs: Option<Vec<String>>,
     },
     Bloom {
         intensity: f64,
